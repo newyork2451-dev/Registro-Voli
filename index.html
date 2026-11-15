@@ -459,7 +459,6 @@ header, main, .card, .stats, table, form {
 
   /* Statistiche: la prima su tutta la riga, poi 2 x 2 */
   .stats { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
-  .stats .card:first-child { grid-column: 1 / -1; }
   .stats .card { padding: 14px 8px; }
   .stats .lbl { font-size: .68rem; letter-spacing: .05em; }
 
@@ -682,13 +681,14 @@ header, main, .card, .stats, table, form {
 <main>
 
   <!-- STATISTICHE -->
-  <div class="stats">
-    <div class="card glass"><div class="num" id="statVoli">0</div><div class="lbl">Voli totali</div></div>
-    <div class="card glass"><div class="num" id="statOre">0:00</div><div class="lbl">Ore di volo</div></div>
-    <div class="card glass"><div class="num" id="statVds">0:00</div><div class="lbl">Ore VDS</div></div>
-    <div class="card glass"><div class="num" id="statPpl">0:00</div><div class="lbl">Ore PPL</div></div>
-    <div class="card glass"><div class="num" id="statAtt">0</div><div class="lbl">Atterraggi</div></div>
-  </div>
+<div class="stats">
+  <div class="card glass"><div class="num" id="statVoli">0</div><div class="lbl">Voli totali</div></div>
+  <div class="card glass"><div class="num" id="statOre">0:00</div><div class="lbl">Ore di volo</div></div>
+  <div class="card glass"><div class="num" id="statVds">0:00</div><div class="lbl">Ore VDS</div></div>
+  <div class="card glass"><div class="num" id="statPic">0:00</div><div class="lbl">Ore PPL PIC</div></div>
+  <div class="card glass"><div class="num" id="statDual">0:00</div><div class="lbl">Ore PPL DUAL</div></div>
+  <div class="card glass"><div class="num" id="statAtt">0</div><div class="lbl">Atterraggi</div></div>
+</div>
   <!-- MODULO INSERIMENTO -->
   <div class="card">
     <h2 id="titoloForm">Nuovo volo</h2>
@@ -710,7 +710,8 @@ header, main, .card, .stats, table, form {
           <label for="licenza">Categoria</label>
           <select id="licenza">
             <option value="VDS">VDS</option>
-            <option value="PPL">PPL</option>
+            <option value="PPL PIC">PPL PIC</option>
+            <option value="PPL DUAL">PPL DUAL</option>
           </select>
         </div>
         <div>
@@ -923,19 +924,21 @@ function esc(testo) {
     }
     $("tabella").innerHTML = html;
 
-    var totMin = 0, totAtt = 0, totVds = 0, totPpl = 0;
-    voli.forEach(function (v) {
-      var d = v.durata || 0;
-      totMin += d;
-      totAtt += parseInt(v.numAtt, 10) || 0;
-      if (v.licenza === "VDS") totVds += d;
-      else if (v.licenza === "PPL") totPpl += d;
-    });
-    $("statVoli").textContent = voli.length;
-    $("statOre").textContent = formatta(totMin);
-    $("statVds").textContent = formatta(totVds);
-    $("statPpl").textContent = formatta(totPpl);
-    $("statAtt").textContent = totAtt;
+  var totMin = 0, totAtt = 0, totVds = 0, totPic = 0, totDual = 0;
+  voli.forEach(function (v) {
+    var d = v.durata || 0;
+    totMin += d;
+    totAtt += parseInt(v.numAtt, 10) || 0;
+    if (v.licenza === "VDS") totVds += d;
+    else if (v.licenza === "PPL PIC" || v.licenza === "PPL") totPic += d;
+    else if (v.licenza === "PPL DUAL") totDual += d;
+  });
+  $("statVoli").textContent = voli.length;
+  $("statOre").textContent = formatta(totMin);
+  $("statVds").textContent = formatta(totVds);
+  $("statPic").textContent = formatta(totPic);
+  $("statDual").textContent = formatta(totDual);
+  $("statAtt").textContent = totAtt;
   }
 
   /* ---------- Modulo ---------- */
@@ -993,7 +996,7 @@ function esc(testo) {
     $("data").value = v.data;
     $("pilota").value = v.pilota;
     $("aeromobile").value = v.aeromobile;
-    $("licenza").value = v.licenza || "VDS";
+    $("licenza").value = v.licenza === "PPL" ? "PPL PIC" : (v.licenza || "VDS");
     $("tipo").value = v.tipo;
     $("partenza").value = v.partenza;
     $("arrivo").value = v.arrivo;
