@@ -417,4 +417,16 @@ tbody td[colspan] {
   table { font-size: 0.82rem; }
   thead th, tbody td { padding: 10px 8px; }
 }
+  /* Gli elementi decorativi non devono mai bloccare i clic */
+.blob,
+*::before,
+*::after {
+  pointer-events: none;
+}
+
+/* Contenuto sempre sopra lo sfondo */
+header, main, .card, .stats, table, form {
+  position: relative;
+  z-index: 1;
+}
 </style>
