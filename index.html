@@ -3,128 +3,114 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FlightCenter - Registro Voli</title>
+<title>AliCaorle - Registro Voli</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --glass: rgba(255,255,255,0.14);
+    --glass-strong: rgba(255,255,255,0.22);
+    --bordo: rgba(255,255,255,0.35);
+    --testo: #ffffff;
+    --testo-soft: rgba(255,255,255,0.75);
+    --accento: #4fc3ff;
+    --pericolo: #ff6b6b;
+    --raggio: 22px;
+  }
+  * { box-sizing: border-box; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-    background: #eef3f8;
-    color: #1c2b3a;
-    line-height: 1.4;
+    margin: 0;
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--testo);
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    background-attachment: fixed;
+    overflow-x: hidden;
+    padding: 24px;
   }
-  header {
-    background: linear-gradient(135deg, #0b4f8a, #1683c9);
-    color: #fff;
-    padding: 22px 20px;
-    text-align: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,.15);
+
+  /* Macchie colorate animate */
+  .blob {
+    position: fixed; border-radius: 50%;
+    filter: blur(80px); opacity: .55; z-index: -1;
+    animation: fluttua 18s ease-in-out infinite alternate;
   }
-  header h1 { font-size: 1.8rem; letter-spacing: .5px; }
-  header p { opacity: .9; margin-top: 4px; }
-  main { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
-  .card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+  .blob.b1 { width: 420px; height: 420px; background: #00c6ff; top: -100px; left: -100px; }
+  .blob.b2 { width: 380px; height: 380px; background: #a855f7; bottom: -120px; right: -80px; animation-delay: -6s; }
+  .blob.b3 { width: 300px; height: 300px; background: #22d3a6; top: 40%; left: 50%; animation-delay: -12s; }
+  @keyframes fluttua {
+    0%   { transform: translate(0,0) scale(1); }
+    50%  { transform: translate(60px,-40px) scale(1.1); }
+    100% { transform: translate(-40px,50px) scale(.95); }
   }
-  .card h2 { font-size: 1.2rem; margin-bottom: 14px; color: #0b4f8a; }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 14px;
+
+  /* Effetto vetro */
+  .glass, #gdGate, form, table {
+    background: var(--glass);
+    border: 1px solid var(--bordo);
+    border-radius: var(--raggio);
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    box-shadow: 0 8px 32px rgba(0,0,0,.25);
   }
-  label { display: block; font-size: .85rem; font-weight: bold; margin-bottom: 4px; color: #44576b; }
+  .glass, #gdGate, form { padding: 20px; margin-bottom: 20px; }
+
+  h1, h2 { margin: 0 0 16px; font-weight: 700; }
+  label { display: block; font-size: .85rem; color: var(--testo-soft); margin-bottom: 4px; }
+
   input, select, textarea {
-    width: 100%;
-    padding: 9px 10px;
-    border: 1px solid #c6d3e0;
-    border-radius: 8px;
-    font-size: .95rem;
-    background: #fafcfe;
+    width: 100%; padding: 10px 12px;
+    background: var(--glass-strong);
+    border: 1px solid var(--bordo);
+    border-radius: 12px; color: var(--testo); font-size: 1rem;
   }
+  input::placeholder, textarea::placeholder { color: var(--testo-soft); }
+  select option { color: #000; }
   input:focus, select:focus, textarea:focus {
-    outline: none;
-    border-color: #1683c9;
-    background: #fff;
+    outline: none; border-color: var(--accento);
+    box-shadow: 0 0 0 3px rgba(79,195,255,.3);
   }
-  textarea { resize: vertical; min-height: 60px; }
-  .full { grid-column: 1 / -1; }
-  .durata-box {
-    padding: 9px 10px;
-    border-radius: 8px;
-    background: #e6f1fb;
-    font-weight: bold;
-    color: #0b4f8a;
-  }
-  .buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+
   button {
-    border: none;
-    border-radius: 8px;
-    padding: 10px 18px;
-    font-size: .95rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: opacity .15s;
+    padding: 10px 18px; border: 1px solid var(--bordo);
+    border-radius: 14px; background: var(--glass-strong);
+    color: var(--testo); font-weight: 600; cursor: pointer;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    transition: transform .15s, background .2s;
   }
-  button:hover { opacity: .85; }
-  .btn-primary { background: #1683c9; color: #fff; }
-  .btn-secondary { background: #dde6ef; color: #1c2b3a; }
-  .btn-success { background: #2e9e5b; color: #fff; }
-  .btn-danger { background: #d64545; color: #fff; }
-  .btn-small { padding: 5px 10px; font-size: .8rem; }
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 14px;
-    margin-bottom: 20px;
+  button:hover { background: rgba(255,255,255,.32); transform: translateY(-1px); }
+  button[type="submit"] { background: linear-gradient(135deg, #00c6ff, #0072ff); border: none; }
+  #btnCancellaTutto { background: rgba(255,107,107,.35); }
+
+  /* Statistiche */
+  #statVoli, #statOre, #statAtt { font-size: 2rem; font-weight: 800; }
+
+  /* Tabella */
+  table { width: 100%; border-collapse: separate; border-spacing: 0; overflow: hidden; }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,.15); }
+  th { background: var(--glass-strong); font-size: .85rem; color: var(--testo-soft); }
+  tr:hover td { background: rgba(255,255,255,.08); }
+
+  /* Badge Drive e stato */
+  #gdBadge, #stato {
+    display: inline-block; padding: 6px 14px; border-radius: 999px;
+    background: var(--glass-strong); border: 1px solid var(--bordo);
+    font-size: .85rem; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   }
-  .stat {
-    background: #fff;
-    border-radius: 12px;
-    padding: 16px;
-    text-align: center;
-    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+
+  @media (max-width: 700px) {
+    body { padding: 12px; }
+    table { display: block; overflow-x: auto; }
   }
-  .stat .num { font-size: 1.7rem; font-weight: bold; color: #1683c9; }
-  .stat .lbl { font-size: .85rem; color: #5b6e82; }
-  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
-  .toolbar input { flex: 1; min-width: 200px; }
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
-  th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #e3eaf1; white-space: nowrap; }
-  th { background: #f2f7fc; color: #0b4f8a; position: sticky; top: 0; }
-  tr:hover td { background: #f8fbfe; }
-  td.note { white-space: normal; min-width: 160px; color: #5b6e82; }
-  .vuoto { text-align: center; padding: 30px; color: #8396a9; }
-  .msg {
-    display: none;
-    margin-top: 12px;
-    padding: 10px;
-    border-radius: 8px;
-    font-weight: bold;
-  }
-  .msg.ok { display: block; background: #e3f6ea; color: #23784a; }
-  .msg.err { display: block; background: #fbe5e5; color: #a53030; }
-  #stato {
-    text-align: center;
-    padding: 12px;
-    margin: 10px auto 30px;
-    max-width: 400px;
-    border-radius: 10px;
-    font-weight: bold;
-    background: #fbe5e5;
-    color: #a53030;
-  }
-  #stato.attivo { background: #e3f6ea; color: #23784a; }
 </style>
 </head>
 <body>
+
+<div class="blob b1"></div>
+<div class="blob b2"></div>
+<div class="blob b3"></div>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <div id="gdGate" style="position:fixed;inset:0;z-index:9999;background:#0f172a;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:sans-serif;text-align:center;padding:20px">
-  <h2 style="margin:0">FlightCenter – Registro Voli</h2>
+  <h2 style="margin:0">AliCaorle – Registro Voli</h2>
   <p style="margin:0;opacity:.8">Collega Google Drive per usare il registro.<br>I dati saranno salvati automaticamente nel tuo Drive.</p>
   <button id="gdLogin" style="padding:12px 22px;font-size:16px;border:0;border-radius:8px;background:#fff;color:#0f172a;cursor:pointer">Accedi con Google</button>
   <div id="gdStato" style="min-height:20px;opacity:.85"></div>
@@ -241,7 +227,7 @@
 })();
 </script>
 <header>
-  <h1>✈ FlightCenter</h1>
+  <h1>✈ AliCaorle</h1>
   <p>Registro Voli</p>
 </header>
 
@@ -249,9 +235,9 @@
 
   <!-- STATISTICHE -->
   <div class="stats">
-    <div class="stat"><div class="num" id="statVoli">0</div><div class="lbl">Voli totali</div></div>
-    <div class="stat"><div class="num" id="statOre">0:00</div><div class="lbl">Ore di volo</div></div>
-    <div class="stat"><div class="num" id="statAtt">0</div><div class="lbl">Atterraggi</div></div>
+    <div class="card glass"><div class="num" id="statVoli">0</div><div class="lbl">Voli totali</div></div>
+    <div class="card glass"><div class="num" id="statOre">0:00</div><div class="lbl">Ore di volo</div></div>
+    <div class="card glass"><div class="num" id="statAtt">0</div><div class="lbl">Atterraggi</div></div>
   </div>
 
   <!-- MODULO INSERIMENTO -->
