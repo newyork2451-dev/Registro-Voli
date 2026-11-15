@@ -767,6 +767,8 @@ header, main, .card, .stats, table, form {
     <div class="toolbar">
       <input type="text" id="cerca" placeholder="🔍 Cerca per pilota, aeromobile, località...">
       <button type="button" class="btn-success" id="btnCsv">Esporta CSV</button>
+      <button type="button" class="btn-secondary" id="btnImporta">Importa file</button>
+      <input type="file" id="fileImporta" accept=".txt,.csv,text/plain,text/csv" style="display:none">
       <button type="button" class="btn-danger" id="btnCancellaTutto">Cancella tutto</button>
     </div>
     <div class="table-wrap">
@@ -1043,7 +1045,155 @@ function esc(testo) {
     link.click();
     document.body.removeChild(link);
   }
+  /* ---------- Importazione da file ---------- */
+  var ALIAS = {
+    data: ["data", "date", "giorno"],
+    pilota: ["pilota", "pilot", "nome"],
+    aeromobile: ["aeromobile", "marche", "aereo", "aircraft", "registrazione"],
+    licenza: ["categoria", "cat", "cat.", "licenza"],
+    tipo: ["tipo", "tipo di volo", "type"],
+    partenza: ["partenza", "da", "from", "dep"],
+    arrivo: ["arrivo", "a", "to", "arr"],
+    decollo: ["decollo", "orario decollo", "takeoff", "off"],
+    atterraggio: ["atterraggio", "orario atterraggio", "atterr.", "landing", "on"],
+    durata: ["durata", "tempo", "duration"],
+    numAtt: ["atterraggi", "n. atterraggi", "att", "att.", "ldg"],
+    note: ["note", "notes", "osservazioni"]
+  };
+  var ORDINE = ["data","pilota","aeromobile","licenza","tipo","partenza","arrivo",
+                "decollo","atterraggio","durata","numAtt","note"];
 
+  function pad(n) { n = String(n); return n.length < 2 ? "0" + n : n; }
+
+  function rilevaSep(riga) {
+    var cand = [";", "\t", ","], best = ";", max = -1;
+    cand.forEach(function (s) {
+      var n = riga.split(s).length;
+      if (n > max) { max = n; best = s; }
+    });
+    return best;
+  }
+
+  function splitRiga(riga, sep) {
+    var out = [], cur = "", q = false;
+    for (var i = 0; i < riga.length; i++) {
+      var c = riga[i];
+      if (q) {
+        if (c === '"') {
+          if (riga[i + 1] === '"') { cur += '"'; i++; } else q = false;
+        } else cur += c;
+      } else if (c === '"') q = true;
+      else if (c === sep) { out.push(cur.trim()); cur = ""; }
+      else cur += c;
+    }
+    out.push(cur.trim());
+    return out;
+  }
+
+  function normData(s) {
+    s = String(s || "").trim();
+    var m = s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/);
+    if (m) return m[1] + "-" + pad(m[2]) + "-" + pad(m[3]);
+    m = s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})$/);
+    if (m) return (m[3].length === 2 ? "20" + m[3] : m[3]) + "-" + pad(m[2]) + "-" + pad(m[1]);
+    return "";
+  }
+
+  function normOra(s) {
+    s = String(s || "").trim().replace(".", ":");
+    var m = s.match(/^(\d{1,2}):(\d{2})/) || s.match(/^(\d{1,2})(\d{2})$/);
+    if (!m) return "";
+    var h = +m[1], mi = +m[2];
+    if (h > 23 || mi > 59) return "";
+    return pad(h) + ":" + pad(mi);
+  }
+
+  function normCat(s) {
+    var u = String(s || "").toUpperCase();
+    if (u.indexOf("DUAL") >= 0) return "PPL DUAL";
+    if (u.indexOf("PPL") >= 0 || u.indexOf("PIC") >= 0) return "PPL PIC";
+    return "VDS";
+  }
+
+  function normTipo(s) {
+    s = String(s || "").trim();
+    if (!s) return "Locale";
+    var tipi = ["Locale", "Navigazione", "Scuola", "Addestramento", "Altro"];
+    for (var i = 0; i < tipi.length; i++) {
+      if (tipi[i].toLowerCase() === s.toLowerCase()) return tipi[i];
+    }
+    return "Altro";
+  }
+
+  function durataDa(s) {
+    var m = String(s || "").trim().match(/^(\d+)[:.](\d{2})$/);
+    return m ? (+m[1]) * 60 + (+m[2]) : null;
+  }
+
+  function importaTesto(testo) {
+    var righe = testo.replace(/^\uFEFF/, "").split(/\r?\n/)
+      .filter(function (r) { return r.trim(); });
+    if (!righe.length) { alert("Il file è vuoto."); return; }
+
+    var sep = rilevaSep(righe[0]);
+    var intest = splitRiga(righe[0], sep).map(function (c) { return c.toLowerCase(); });
+
+    // Cerca l'intestazione; se manca usa l'ordine dell'esportazione CSV
+    var idx = {};
+    Object.keys(ALIAS).forEach(function (campo) {
+      for (var i = 0; i < intest.length; i++) {
+        if (ALIAS[campo].indexOf(intest[i]) !== -1) { idx[campo] = i; break; }
+      }
+    });
+    var inizio = 1;
+    if (idx.data === undefined) {
+      idx = {};
+      ORDINE.forEach(function (c, i) { idx[c] = i; });
+      inizio = 0;
+    }
+
+    var esistenti = {};
+    voli.forEach(function (v) { esistenti[v.data + "|" + v.decollo + "|" + v.aeromobile] = true; });
+
+    var aggiunti = 0, doppi = 0, scartati = 0;
+    for (var r = inizio; r < righe.length; r++) {
+      var c = splitRiga(righe[r], sep);
+      var val = function (campo) { return idx[campo] !== undefined ? (c[idx[campo]] || "") : ""; };
+
+      var volo = {
+        id: String(Date.now()) + r + Math.random().toString(16).slice(2, 6),
+        data: normData(val("data")),
+        pilota: val("pilota").trim(),
+        aeromobile: val("aeromobile").trim().toUpperCase(),
+        licenza: normCat(val("licenza")),
+        tipo: normTipo(val("tipo")),
+        partenza: val("partenza").trim(),
+        arrivo: val("arrivo").trim(),
+        decollo: normOra(val("decollo")),
+        atterraggio: normOra(val("atterraggio")),
+        numAtt: parseInt(val("numAtt"), 10) || 1,
+        note: val("note").trim()
+      };
+      volo.durata = (volo.decollo && volo.atterraggio)
+        ? calcolaDurata(volo.decollo, volo.atterraggio)
+        : durataDa(val("durata"));
+
+      if (!volo.data || !volo.pilota || !volo.aeromobile || volo.durata === null) {
+        scartati++; continue;
+      }
+      var chiave = volo.data + "|" + volo.decollo + "|" + volo.aeromobile;
+      if (esistenti[chiave]) { doppi++; continue; }
+      esistenti[chiave] = true;
+      voli.push(volo);
+      aggiunti++;
+    }
+
+    if (aggiunti) { salva(); disegna(); }
+    alert("Importazione completata ✈️\n\n" +
+      "✅ Voli aggiunti: " + aggiunti + "\n" +
+      "🔁 Già presenti (saltati): " + doppi + "\n" +
+      "⚠️ Righe non valide: " + scartati);
+  }
   /* ---------- Avvio ---------- */
   function avvia() {
     carica();
@@ -1056,6 +1206,17 @@ function esc(testo) {
     $("atterraggio").addEventListener("input", aggiornaDurata);
     $("cerca").addEventListener("input", disegna);
     $("btnCsv").addEventListener("click", esportaCsv);
+    $("btnImporta").addEventListener("click", function () { $("fileImporta").click(); });
+    $("fileImporta").addEventListener("change", function (e) {
+      var f = e.target.files[0];
+      if (!f) return;
+      var lettore = new FileReader();
+      lettore.onload = function () {
+        importaTesto(String(lettore.result));
+        e.target.value = "";
+      };
+      lettore.readAsText(f, "UTF-8");
+    });
     $("btnCancellaTutto").addEventListener("click", function () {
       if (!voli.length) return;
       if (confirm("Vuoi davvero cancellare TUTTI i voli? L'operazione non si può annullare.")) {
