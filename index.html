@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f2027">
 <title>Flight Center - Registro Voli</title>
 <style>
   :root {
@@ -28,11 +29,27 @@
     font-size: 15px;
     line-height: 1.5;
     color: var(--testo);
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364) fixed;
     overflow-x: hidden;
     padding: clamp(14px, 3vw, 32px);
   }
-
+/* Colore di base: niente bianco durante il caricamento o lo scroll elastico */
+  html {
+    background: #0f2027;
+    min-height: 100%;
+  }
+  
+  /* Sfondo sfumato su un livello fisso a tutto schermo (funziona anche su iPhone) */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  }
+  
+  body {
+    min-height: 100dvh; /* altezza reale dello schermo su mobile */
+  }
   /* ---------- Sfondo animato ---------- */
   .blob {
     position: fixed; border-radius: 50%;
