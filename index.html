@@ -419,4 +419,19 @@ tbody td[colspan] {
 }
   /* Lo sfondo non deve mai intercettare i clic */
 .blob { pointer-events: none; z-index: -1; }
+  /* ===== Forza visibilità contenuto ===== */
+.blob { z-index: -1 !important; pointer-events: none !important; }
+
+body > *:not(.blob):not(script) {
+  position: relative;
+  z-index: 1;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+}
+
+header, main, section, .card, .stats, table, form {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
 </style>
