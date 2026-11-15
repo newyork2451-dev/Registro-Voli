@@ -571,7 +571,7 @@ header, main, .card, .stats, table, form {
 })();
 </script>
 <header>
-  <h1>✈ Fight Center</h1>
+  <h1>✈ Flight Center</h1>
   <p>Registro Voli</p>
 </header>
 
@@ -581,9 +581,10 @@ header, main, .card, .stats, table, form {
   <div class="stats">
     <div class="card glass"><div class="num" id="statVoli">0</div><div class="lbl">Voli totali</div></div>
     <div class="card glass"><div class="num" id="statOre">0:00</div><div class="lbl">Ore di volo</div></div>
+    <div class="card glass"><div class="num" id="statVds">0:00</div><div class="lbl">Ore VDS</div></div>
+    <div class="card glass"><div class="num" id="statPpl">0:00</div><div class="lbl">Ore PPL</div></div>
     <div class="card glass"><div class="num" id="statAtt">0</div><div class="lbl">Atterraggi</div></div>
   </div>
-
   <!-- MODULO INSERIMENTO -->
   <div class="card">
     <h2 id="titoloForm">Nuovo volo</h2>
@@ -600,6 +601,13 @@ header, main, .card, .stats, table, form {
         <div>
           <label for="aeromobile">Aeromobile (marche)</label>
           <input type="text" id="aeromobile" placeholder="Es. I-ABCD" required>
+        </div>
+        <div>
+          <label for="licenza">Categoria</label>
+          <select id="licenza">
+            <option value="VDS">VDS</option>
+            <option value="PPL">PPL</option>
+          </select>
         </div>
         <div>
           <label for="tipo">Tipo di volo</label>
@@ -663,6 +671,7 @@ header, main, .card, .stats, table, form {
             <th>Data</th>
             <th>Pilota</th>
             <th>Aeromobile</th>
+            <th>Cat.</th>
             <th>Tipo</th>
             <th>Tratta</th>
             <th>Decollo</th>
@@ -777,7 +786,7 @@ function esc(testo) {
 
     var filtrati = ordinati.filter(function (v) {
       if (!filtro) return true;
-      return [v.pilota, v.aeromobile, v.tipo, v.partenza, v.arrivo, v.note]
+      return [v.pilota, v.aeromobile, v.licenza, v.tipo, v.partenza, v.arrivo, v.note]
         .join(" ").toLowerCase().indexOf(filtro) !== -1;
     });
 
@@ -788,6 +797,7 @@ function esc(testo) {
         "<td>" + esc(formattaData(v.data)) + "</td>" +
         "<td>" + esc(v.pilota) + "</td>" +
         "<td>" + esc(v.aeromobile) + "</td>" +
+        "<td>" + esc(v.licenza || "-") + "</td>" +
         "<td>" + esc(v.tipo) + "</td>" +
         "<td>" + esc(v.partenza || "-") + " → " + esc(v.arrivo || "-") + "</td>" +
         "<td>" + esc(v.decollo) + "</td>" +
@@ -803,19 +813,24 @@ function esc(testo) {
     });
 
     if (!html) {
-      html = "<tr><td colspan='11' class='vuoto'>" +
+      html = "<tr><td colspan='12' class='vuoto'>" +
         (voli.length ? "Nessun volo corrisponde alla ricerca." : "Nessun volo registrato.") +
         "</td></tr>";
     }
     $("tabella").innerHTML = html;
 
-    var totMin = 0, totAtt = 0;
+    var totMin = 0, totAtt = 0, totVds = 0, totPpl = 0;
     voli.forEach(function (v) {
-      totMin += v.durata || 0;
+      var d = v.durata || 0;
+      totMin += d;
       totAtt += parseInt(v.numAtt, 10) || 0;
+      if (v.licenza === "VDS") totVds += d;
+      else if (v.licenza === "PPL") totPpl += d;
     });
     $("statVoli").textContent = voli.length;
     $("statOre").textContent = formatta(totMin);
+    $("statVds").textContent = formatta(totVds);
+    $("statPpl").textContent = formatta(totPpl);
     $("statAtt").textContent = totAtt;
   }
 
@@ -838,6 +853,7 @@ function esc(testo) {
       data: $("data").value,
       pilota: $("pilota").value.trim(),
       aeromobile: $("aeromobile").value.trim().toUpperCase(),
+      licenza: $("licenza").value,
       tipo: $("tipo").value,
       partenza: $("partenza").value.trim(),
       arrivo: $("arrivo").value.trim(),
@@ -873,6 +889,7 @@ function esc(testo) {
     $("data").value = v.data;
     $("pilota").value = v.pilota;
     $("aeromobile").value = v.aeromobile;
+    $("licenza").value = v.licenza || "VDS";
     $("tipo").value = v.tipo;
     $("partenza").value = v.partenza;
     $("arrivo").value = v.arrivo;
@@ -900,9 +917,9 @@ function esc(testo) {
       alert("Non ci sono voli da esportare.");
       return;
     }
-    var righe = [["Data","Pilota","Aeromobile","Tipo","Partenza","Arrivo","Decollo","Atterraggio","Durata","Atterraggi","Note"]];
+    var righe = [["Data","Pilota","Aeromobile","Categoria","Tipo","Partenza","Arrivo","Decollo","Atterraggio","Durata","Atterraggi","Note"]];
     voli.forEach(function (v) {
-      righe.push([formattaData(v.data), v.pilota, v.aeromobile, v.tipo, v.partenza, v.arrivo,
+      righe.push([formattaData(v.data), v.pilota, v.aeromobile, v.licenza || "", v.tipo, v.partenza, v.arrivo,
                   v.decollo, v.atterraggio, formatta(v.durata), v.numAtt, v.note]);
     });
     var csv = righe.map(function (r) {
