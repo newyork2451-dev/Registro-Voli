@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0f2027">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Flight Center - Registro Voli</title>
 <style>
   :root {
@@ -488,6 +490,8 @@ header, main, .card, .stats, table, form {
   /* Badge Drive più piccolo, per non coprire i pulsanti */
   #gdBadge { font-size: 11px !important; padding: 5px 10px !important; }
 }
+  #gdBadge { max-width: calc(100vw - 28px); white-space: normal; text-align: right; }
+  #gdBadge a { text-decoration: none; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -508,24 +512,57 @@ header, main, .card, .stats, table, form {
 <script>
 (()=>{
   const CLIENT_ID="759976089681-cq8c7ssjun7gue9f7qdkpq9iduu7bcf6.apps.googleusercontent.com";
-  const SCOPE="https://www.googleapis.com/auth/drive.file";
+  const SCOPE="https://www.googleapis.com/auth/drive.file openid email";
   const KEY="alicaorle_registro_voli";
   const FILE_NAME="registro-voli-alicaorle.json";
+  const LS=localStorage, SS=sessionStorage;
 
   const gate=document.getElementById("gdGate");
   const stato=document.getElementById("gdStato");
   const badge=document.getElementById("gdBadge");
+  const btnLogin=document.getElementById("gdLogin");
   const origSet=Storage.prototype.setItem;
-  let token=null, fileId=sessionStorage.getItem("gd_fileId"), timer=null, inAttesa=false;
 
-  const salvato=JSON.parse(sessionStorage.getItem("gd_tok")||"null");
+  let token=null, fileId=LS.getItem("gd_fileId"), timer=null, inAttesa=false;
+  let utente=JSON.parse(LS.getItem("gd_user")||"null");
+
+  const salvato=JSON.parse(LS.getItem("gd_tok")||"null");
   if(salvato && salvato.exp>Date.now()) token=salvato.t;
 
-  const mostra=t=>{badge.style.display="block";badge.textContent=t;};
+  /* --- Pulsante "Usa un altro account" nella schermata di accesso --- */
+  const btnAltro=document.createElement("button");
+  btnAltro.textContent="Usa un altro account";
+  btnAltro.style.cssText="background:none;border:0;color:#4fc3ff;text-decoration:underline;cursor:pointer;font:inherit;height:auto;box-shadow:none";
+  btnAltro.onclick=()=>login(true);
+  if(utente){
+    btnLogin.textContent="Continua come "+utente.email;
+    btnLogin.after(btnAltro);
+  }
+
+  /* --- Badge con Cambia account / Esci --- */
+  badge.innerHTML='<span id="gdTesto"></span>'+
+    '<span id="gdAzioni" style="display:none;margin-left:10px">'+
+    '<a href="#" id="gdCambia" style="color:#4fc3ff">Cambia account</a> · '+
+    '<a href="#" id="gdEsci" style="color:#ff6b6b">Esci</a></span>';
+  const testo=document.getElementById("gdTesto");
+  const mostra=t=>{badge.style.display="block";testo.textContent=(utente?utente.email+" · ":"")+t;};
+  document.getElementById("gdEsci").onclick=e=>{e.preventDefault();esci(false);};
+  document.getElementById("gdCambia").onclick=e=>{e.preventDefault();esci(true);};
+
+  function esci(cambia){
+    if(inAttesa && !confirm("Salvataggio su Drive in corso. Uscire comunque?")) return;
+    if(!cambia && !confirm("Vuoi disconnetterti da Google Drive?")) return;
+    ["gd_tok","gd_fileId",KEY].forEach(k=>LS.removeItem(k));
+    if(!cambia) LS.removeItem("gd_user");
+    SS.clear();
+    if(cambia) SS.setItem("gd_cambia","1");
+    inAttesa=false;
+    location.reload();
+  }
 
   async function api(url,opt={}){
     const r=await fetch(url,{...opt,headers:{...(opt.headers||{}),Authorization:"Bearer "+token}});
-    if(r.status===401){sessionStorage.removeItem("gd_tok");location.reload();throw new Error("Sessione scaduta");}
+    if(r.status===401){LS.removeItem("gd_tok");SS.clear();location.reload();throw new Error("Sessione scaduta");}
     if(!r.ok) throw new Error(await r.text());
     return r;
   }
@@ -535,7 +572,7 @@ header, main, .card, .stats, table, form {
     const q=encodeURIComponent(`name='${FILE_NAME}' and trashed=false`);
     const r=await (await api(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id)`)).json();
     fileId=r.files&&r.files[0]?r.files[0].id:null;
-    if(fileId) sessionStorage.setItem("gd_fileId",fileId);
+    if(fileId) LS.setItem("gd_fileId",fileId);
     return fileId;
   }
 
@@ -548,17 +585,17 @@ header, main, .card, .stats, table, form {
       ?`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`
       :"https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id";
     const r=await (await api(url,{method:fileId?"PATCH":"POST",body:fd})).json();
-    if(!fileId){fileId=r.id;sessionStorage.setItem("gd_fileId",fileId);}
+    if(!fileId){fileId=r.id;LS.setItem("gd_fileId",fileId);}
   }
 
   function programmaSalvataggio(){
-    inAttesa=true; mostra("⏳ Salvataggio su Drive…");
+    inAttesa=true; mostra("⏳ Salvataggio…");
     clearTimeout(timer);
     timer=setTimeout(async()=>{
       try{
-        await carica(localStorage.getItem(KEY)||"[]");
+        await carica(LS.getItem(KEY)||"[]");
         inAttesa=false; mostra("✅ Salvato su Drive");
-      }catch(e){mostra("⚠️ Errore salvataggio Drive");console.error(e);}
+      }catch(e){mostra("⚠️ Errore salvataggio");console.error(e);}
     },1500);
   }
 
@@ -568,55 +605,72 @@ header, main, .card, .stats, table, form {
       if(this===localStorage && k===KEY) programmaSalvataggio();
     };
     window.addEventListener("beforeunload",e=>{if(inAttesa){e.preventDefault();e.returnValue="";}});
-    mostra("☁️ Collegato a Google Drive");
+    document.getElementById("gdAzioni").style.display="inline";
+    mostra("☁️ Collegato");
   }
 
   async function avvia(){
-  stato.textContent="Sincronizzazione con Google Drive…";
-  try{
-    if(!sessionStorage.getItem("gd_sync")){
-      const id=await trovaFile();
-      if(id){
-        const testo=await (await api(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`)).text();
-        const dati=JSON.parse(testo||"[]");
-        if(!Array.isArray(dati)) throw new Error("File su Drive non valido");
-        origSet.call(localStorage,KEY,JSON.stringify(dati));
-      }else{
-        await carica(localStorage.getItem(KEY)||"[]");
+    stato.textContent="Sincronizzazione con Google Drive…";
+    try{
+      if(!SS.getItem("gd_sync")){
+        const id=await trovaFile();
+        if(id){
+          const t=await (await api(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`)).text();
+          const dati=JSON.parse(t||"[]");
+          if(!Array.isArray(dati)) throw new Error("File su Drive non valido");
+          origSet.call(LS,KEY,JSON.stringify(dati));
+        }else{
+          await carica(LS.getItem(KEY)||"[]");
+        }
+        SS.setItem("gd_sync","1");
+        if(!SS.getItem("gd_reloaded")){
+          SS.setItem("gd_reloaded","1");
+          location.reload();
+          return;
+        }
       }
-      sessionStorage.setItem("gd_sync","1");
-      // Protezione anti-loop: ricarica una sola volta
-      if(!sessionStorage.getItem("gd_reloaded")){
-        sessionStorage.setItem("gd_reloaded","1");
-        location.reload();
-        return;
-      }
+      gate.remove();
+      attivaSincronizzazione();
+    }catch(e){
+      console.error(e);
+      stato.innerHTML="Errore Drive: "+e.message+
+        '<br><button id="gdSkip" style="margin-top:10px">Continua senza Drive</button>';
+      document.getElementById("gdSkip").onclick=()=>gate.remove();
     }
-    gate.remove();
-    attivaSincronizzazione();
-  }catch(e){
-    console.error(e);
-    stato.innerHTML="Errore Drive: "+e.message+
-      '<br><button id="gdSkip" style="margin-top:10px">Continua senza Drive</button>';
-    document.getElementById("gdSkip").onclick=()=>gate.remove();
   }
-}
 
-  function login(){
+  function login(altroAccount){
     if(!window.google||!google.accounts){stato.textContent="Caricamento Google in corso, riprova tra un attimo.";return;}
-    google.accounts.oauth2.initTokenClient({
+    const client=google.accounts.oauth2.initTokenClient({
       client_id:CLIENT_ID,
       scope:SCOPE,
-      callback:r=>{
+      callback:async r=>{
         if(r.error){stato.textContent="Accesso non autorizzato.";return;}
         token=r.access_token;
-        sessionStorage.setItem("gd_tok",JSON.stringify({t:token,exp:Date.now()+(r.expires_in-60)*1000}));
+        LS.setItem("gd_tok",JSON.stringify({t:token,exp:Date.now()+(r.expires_in-60)*1000}));
+        try{
+          const u=await (await api("https://www.googleapis.com/oauth2/v3/userinfo")).json();
+          if(utente && utente.email!==u.email){
+            // Account diverso: niente dati del profilo precedente
+            LS.removeItem(KEY); LS.removeItem("gd_fileId"); fileId=null;
+            SS.removeItem("gd_sync"); SS.removeItem("gd_reloaded");
+          }
+          utente={email:u.email};
+          LS.setItem("gd_user",JSON.stringify(utente));
+        }catch(e){console.error(e);}
         avvia();
       }
-    }).requestAccessToken();
+    });
+    if(altroAccount) client.requestAccessToken({prompt:"select_account"});
+    else if(utente) client.requestAccessToken({prompt:"",login_hint:utente.email});
+    else client.requestAccessToken();
   }
 
-  document.getElementById("gdLogin").onclick=login;
+  btnLogin.onclick=()=>login(SS.getItem("gd_cambia")==="1");
+  if(SS.getItem("gd_cambia")==="1"){
+    btnLogin.textContent="Scegli l'account Google";
+    btnAltro.remove();
+  }
   if(token) avvia();
 })();
 </script>
@@ -1028,6 +1082,8 @@ function esc(testo) {
   }
 })();
 </script>
-
+<script>
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+</script>
 </body>
 </html>
