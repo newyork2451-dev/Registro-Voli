@@ -230,8 +230,8 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   font-family: inherit !important;
-}
   }
+  
   #gdGate h2 { font-size: 1.6rem; font-weight: 800; }
   #gdLogin {
     height: 48px !important;
@@ -252,15 +252,6 @@
     bottom: 14px !important; right: 14px !important;
   }
 
-  /* ---------- Smartphone ---------- */
-  @media (max-width: 640px) {
-    .stats { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .stats .card { padding: 14px 6px; }
-    .stats .lbl { font-size: .65rem; letter-spacing: .04em; }
-    .grid { grid-template-columns: 1fr 1fr; }
-    .buttons button, .toolbar button { flex: 1 1 auto; }
-    .toolbar input { flex-basis: 100%; }
-  }
   /* ===== Intestazione "Registro Voli" ===== */
 header {
   text-align: center;
@@ -437,6 +428,48 @@ tbody td[colspan] {
 header, main, .card, .stats, table, form {
   position: relative;
   z-index: 1;
+}
+/* ===== Correzioni smartphone (tenere in fondo) ===== */
+.grid > div,
+.stats > .card { min-width: 0; }
+
+@media (max-width: 640px) {
+  body { padding: 12px; }
+
+  .card { padding: 16px; margin-bottom: 16px; }
+
+  /* Statistiche: la prima su tutta la riga, poi 2 x 2 */
+  .stats { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+  .stats .card:first-child { grid-column: 1 / -1; }
+  .stats .card { padding: 14px 8px; }
+  .stats .lbl { font-size: .68rem; letter-spacing: .05em; }
+
+  /* Modulo: un campo per riga */
+  .grid { grid-template-columns: 1fr; gap: 12px; }
+
+  /* 16px evita lo zoom automatico di iPhone sui campi */
+  input, select, textarea { font-size: 16px; }
+
+  /* Campi data/ora: niente larghezza minima forzata su iOS */
+  input[type="date"],
+  input[type="time"] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+  }
+  input::-webkit-date-and-time-value { text-align: left; }
+
+  /* Pulsanti del modulo affiancati e larghi uguali */
+  .buttons button { flex: 1 1 0; }
+
+  /* Barra ricerca: campo sopra, pulsanti sotto a metà */
+  .toolbar input { flex: 1 1 100%; }
+  .toolbar button { flex: 1 1 0; }
+
+  /* Badge Drive più piccolo, per non coprire i pulsanti */
+  #gdBadge { font-size: 11px !important; padding: 5px 10px !important; }
 }
 </style>
 </head>
