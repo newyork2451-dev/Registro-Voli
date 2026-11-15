@@ -226,8 +226,11 @@
 
   /* ---------- Schermata accesso Google ---------- */
   #gdGate {
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364) !important;
-    font-family: inherit !important;
+  background: rgba(10,20,30,.92) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  font-family: inherit !important;
+}
   }
   #gdGate h2 { font-size: 1.6rem; font-weight: 800; }
   #gdLogin {
@@ -519,29 +522,35 @@ header, main, .card, .stats, table, form {
   }
 
   async function avvia(){
-    stato.textContent="Sincronizzazione con Google Drive…";
-    try{
-      if(!sessionStorage.getItem("gd_sync")){
-        const id=await trovaFile();
-        if(id){
-          const testo=await (await api(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`)).text();
-          const dati=JSON.parse(testo||"[]");
-          if(!Array.isArray(dati)) throw new Error("File su Drive non valido");
-          origSet.call(localStorage,KEY,JSON.stringify(dati));
-        }else{
-          await carica(localStorage.getItem(KEY)||"[]");
-        }
-        sessionStorage.setItem("gd_sync","1");
+  stato.textContent="Sincronizzazione con Google Drive…";
+  try{
+    if(!sessionStorage.getItem("gd_sync")){
+      const id=await trovaFile();
+      if(id){
+        const testo=await (await api(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`)).text();
+        const dati=JSON.parse(testo||"[]");
+        if(!Array.isArray(dati)) throw new Error("File su Drive non valido");
+        origSet.call(localStorage,KEY,JSON.stringify(dati));
+      }else{
+        await carica(localStorage.getItem(KEY)||"[]");
+      }
+      sessionStorage.setItem("gd_sync","1");
+      // Protezione anti-loop: ricarica una sola volta
+      if(!sessionStorage.getItem("gd_reloaded")){
+        sessionStorage.setItem("gd_reloaded","1");
         location.reload();
         return;
       }
-      gate.remove();
-      attivaSincronizzazione();
-    }catch(e){
-      stato.textContent="Errore: "+e.message;
-      console.error(e);
     }
+    gate.remove();
+    attivaSincronizzazione();
+  }catch(e){
+    console.error(e);
+    stato.innerHTML="Errore Drive: "+e.message+
+      '<br><button id="gdSkip" style="margin-top:10px">Continua senza Drive</button>';
+    document.getElementById("gdSkip").onclick=()=>gate.remove();
   }
+}
 
   function login(){
     if(!window.google||!google.accounts){stato.textContent="Caricamento Google in corso, riprova tra un attimo.";return;}
