@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AliCaorle - Registro Voli</title>
+<title>Flight Center - Registro Voli</title>
 <style>
   :root {
     --glass: rgba(255,255,255,0.14);
@@ -100,6 +100,85 @@
     body { padding: 12px; }
     table { display: block; overflow-x: auto; }
   }
+  /* ===== Correzione proporzioni ===== */
+:root {
+  --spazio-xs: 0.5rem;
+  --spazio-s: 0.75rem;
+  --spazio-m: 1.25rem;
+  --spazio-l: 2rem;
+  --raggio: 18px;
+  --larghezza-max: 720px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: clamp(1rem, 4vw, 2.5rem);
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Contenitore centrale: largo il giusto, mai attaccato ai bordi */
+body > main,
+body > .container,
+body > .app,
+body > div:not([class*="blob"]):not([class*="bg"]) {
+  width: 100%;
+  max-width: var(--larghezza-max);
+  margin-inline: auto;
+}
+
+/* Titoli proporzionati allo schermo */
+h1 { font-size: clamp(1.6rem, 4.5vw, 2.4rem); line-height: 1.2; margin: 0 0 var(--spazio-m); }
+h2 { font-size: clamp(1.25rem, 3.2vw, 1.6rem); line-height: 1.25; margin: var(--spazio-l) 0 var(--spazio-s); }
+h3 { font-size: clamp(1.05rem, 2.5vw, 1.2rem); margin: var(--spazio-m) 0 var(--spazio-xs); }
+p  { margin: 0 0 var(--spazio-s); }
+
+/* Pannelli in vetro: padding ed angoli coerenti */
+[class*="card"],
+[class*="glass"],
+[class*="panel"] {
+  padding: clamp(1rem, 3vw, 1.75rem);
+  border-radius: var(--raggio);
+  margin-bottom: var(--spazio-m);
+}
+
+/* Pulsanti e campi: stessa altezza, comodi da toccare */
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  font-size: 1rem;
+  min-height: 44px;
+  padding: 0.6rem 1rem;
+  border-radius: 12px;
+}
+
+input, select, textarea { width: 100%; }
+textarea { min-height: 120px; resize: vertical; }
+
+button { cursor: pointer; white-space: nowrap; }
+
+/* Gruppi di pulsanti ben distanziati */
+button + button { margin-left: var(--spazio-xs); }
+
+/* Immagini e icone mai fuori misura */
+img, svg, video { max-width: 100%; height: auto; }
+
+/* Smartphone */
+@media (max-width: 600px) {
+  :root { --raggio: 14px; }
+  body { padding: 0.9rem; }
+  button { width: 100%; }
+  button + button { margin-left: 0; margin-top: var(--spazio-xs); }
+}
 </style>
 </head>
 <body>
@@ -110,7 +189,7 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <div id="gdGate" style="position:fixed;inset:0;z-index:9999;background:#0f172a;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:sans-serif;text-align:center;padding:20px">
-  <h2 style="margin:0">AliCaorle – Registro Voli</h2>
+  <h2 style="margin:0">Flight Center – Registro Voli</h2>
   <p style="margin:0;opacity:.8">Collega Google Drive per usare il registro.<br>I dati saranno salvati automaticamente nel tuo Drive.</p>
   <button id="gdLogin" style="padding:12px 22px;font-size:16px;border:0;border-radius:8px;background:#fff;color:#0f172a;cursor:pointer">Accedi con Google</button>
   <div id="gdStato" style="min-height:20px;opacity:.85"></div>
@@ -227,7 +306,7 @@
 })();
 </script>
 <header>
-  <h1>✈ AliCaorle</h1>
+  <h1>✈ Flight Center</h1>
   <p>Registro Voli</p>
 </header>
 
