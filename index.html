@@ -1,701 +1,255 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Flight Center - Registro Voli</title>
 <style>
   :root {
-    --glass: rgba(255,255,255,0.14);
-    --glass-strong: rgba(255,255,255,0.22);
-    --bordo: rgba(255,255,255,0.35);
+    --glass: rgba(255,255,255,0.10);
+    --glass-strong: rgba(255,255,255,0.18);
+    --bordo: rgba(255,255,255,0.22);
     --testo: #ffffff;
-    --testo-soft: rgba(255,255,255,0.75);
+    --testo-soft: rgba(255,255,255,0.72);
     --accento: #4fc3ff;
+    --successo: #22d3a6;
     --pericolo: #ff6b6b;
-    --raggio: 22px;
+    --raggio: 20px;
+    --raggio-s: 12px;
+    --max: 1100px;
   }
-  * { box-sizing: border-box; }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
   body {
     margin: 0;
     min-height: 100vh;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
     color: var(--testo);
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-    background-attachment: fixed;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364) fixed;
     overflow-x: hidden;
-    padding: 24px;
+    padding: clamp(14px, 3vw, 32px);
   }
 
-  /* Macchie colorate animate */
+  /* ---------- Sfondo animato ---------- */
   .blob {
     position: fixed; border-radius: 50%;
-    filter: blur(80px); opacity: .55; z-index: -1;
-    animation: fluttua 18s ease-in-out infinite alternate;
+    filter: blur(90px); opacity: .45; z-index: -1;
+    animation: fluttua 20s ease-in-out infinite alternate;
+    pointer-events: none;
   }
-  .blob.b1 { width: 420px; height: 420px; background: #00c6ff; top: -100px; left: -100px; }
-  .blob.b2 { width: 380px; height: 380px; background: #a855f7; bottom: -120px; right: -80px; animation-delay: -6s; }
-  .blob.b3 { width: 300px; height: 300px; background: #22d3a6; top: 40%; left: 50%; animation-delay: -12s; }
+  .blob.b1 { width: 420px; height: 420px; background: #00c6ff; top: -120px; left: -120px; }
+  .blob.b2 { width: 380px; height: 380px; background: #a855f7; bottom: -140px; right: -100px; animation-delay: -7s; }
+  .blob.b3 { width: 300px; height: 300px; background: #22d3a6; top: 45%; left: 45%; animation-delay: -14s; }
   @keyframes fluttua {
     0%   { transform: translate(0,0) scale(1); }
-    50%  { transform: translate(60px,-40px) scale(1.1); }
+    50%  { transform: translate(60px,-40px) scale(1.08); }
     100% { transform: translate(-40px,50px) scale(.95); }
   }
 
-  /* Effetto vetro */
-  .glass, #gdGate, form, table {
+  /* ---------- Layout ---------- */
+  header, main { max-width: var(--max); margin: 0 auto; }
+
+  header { text-align: center; margin-bottom: 28px; }
+  header h1 {
+    margin: 0;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    font-weight: 800;
+    letter-spacing: -.02em;
+  }
+  header p {
+    margin: 4px 0 0;
+    color: var(--testo-soft);
+    text-transform: uppercase;
+    letter-spacing: .18em;
+    font-size: .8rem;
+  }
+
+  /* ---------- Pannelli in vetro ---------- */
+  .card {
     background: var(--glass);
     border: 1px solid var(--bordo);
     border-radius: var(--raggio);
     backdrop-filter: blur(22px) saturate(160%);
     -webkit-backdrop-filter: blur(22px) saturate(160%);
-    box-shadow: 0 8px 32px rgba(0,0,0,.25);
+    box-shadow: 0 10px 40px rgba(0,0,0,.25);
+    padding: clamp(18px, 3vw, 28px);
+    margin-bottom: 22px;
   }
-  .glass, #gdGate, form { padding: 20px; margin-bottom: 20px; }
+  .card h2 { margin: 0 0 18px; font-size: 1.25rem; font-weight: 700; }
 
-  h1, h2 { margin: 0 0 16px; font-weight: 700; }
-  label { display: block; font-size: .85rem; color: var(--testo-soft); margin-bottom: 4px; }
-
-  input, select, textarea {
-    width: 100%; padding: 10px 12px;
-    background: var(--glass-strong);
-    border: 1px solid var(--bordo);
-    border-radius: 12px; color: var(--testo); font-size: 1rem;
+  /* ---------- Statistiche ---------- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 22px;
   }
-  input::placeholder, textarea::placeholder { color: var(--testo-soft); }
-  select option { color: #000; }
-  input:focus, select:focus, textarea:focus {
-    outline: none; border-color: var(--accento);
-    box-shadow: 0 0 0 3px rgba(79,195,255,.3);
+  .stats .card { margin: 0; text-align: center; padding: 20px 12px; }
+  .stats .num {
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    font-weight: 800;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #fff, var(--accento));
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent;
   }
-
-  button {
-    padding: 10px 18px; border: 1px solid var(--bordo);
-    border-radius: 14px; background: var(--glass-strong);
-    color: var(--testo); font-weight: 600; cursor: pointer;
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    transition: transform .15s, background .2s;
-  }
-  button:hover { background: rgba(255,255,255,.32); transform: translateY(-1px); }
-  button[type="submit"] { background: linear-gradient(135deg, #00c6ff, #0072ff); border: none; }
-  #btnCancellaTutto { background: rgba(255,107,107,.35); }
-
-  /* Statistiche */
-  #statVoli, #statOre, #statAtt { font-size: 2rem; font-weight: 800; }
-
-  /* Tabella */
-  table { width: 100%; border-collapse: separate; border-spacing: 0; overflow: hidden; }
-  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,.15); }
-  th { background: var(--glass-strong); font-size: .85rem; color: var(--testo-soft); }
-  tr:hover td { background: rgba(255,255,255,.08); }
-
-  /* Badge Drive e stato */
-  #gdBadge, #stato {
-    display: inline-block; padding: 6px 14px; border-radius: 999px;
-    background: var(--glass-strong); border: 1px solid var(--bordo);
-    font-size: .85rem; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  }
-
-  @media (max-width: 700px) {
-    body { padding: 12px; }
-    table { display: block; overflow-x: auto; }
-  }
-  /* ===== Correzione proporzioni ===== */
-:root {
-  --spazio-xs: 0.5rem;
-  --spazio-s: 0.75rem;
-  --spazio-m: 1.25rem;
-  --spazio-l: 2rem;
-  --raggio: 18px;
-  --larghezza-max: 720px;
-}
-
-*, *::before, *::after { box-sizing: border-box; }
-
-html { font-size: 16px; }
-
-body {
-  margin: 0;
-  min-height: 100vh;
-  padding: clamp(1rem, 4vw, 2.5rem);
-  line-height: 1.5;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* Contenitore centrale: largo il giusto, mai attaccato ai bordi */
-body > main,
-body > .container,
-body > .app,
-body > div:not([class*="blob"]):not([class*="bg"]) {
-  width: 100%;
-  max-width: var(--larghezza-max);
-  margin-inline: auto;
-}
-
-/* Titoli proporzionati allo schermo */
-h1 { font-size: clamp(1.6rem, 4.5vw, 2.4rem); line-height: 1.2; margin: 0 0 var(--spazio-m); }
-h2 { font-size: clamp(1.25rem, 3.2vw, 1.6rem); line-height: 1.25; margin: var(--spazio-l) 0 var(--spazio-s); }
-h3 { font-size: clamp(1.05rem, 2.5vw, 1.2rem); margin: var(--spazio-m) 0 var(--spazio-xs); }
-p  { margin: 0 0 var(--spazio-s); }
-
-/* Pannelli in vetro: padding ed angoli coerenti */
-[class*="card"],
-[class*="glass"],
-[class*="panel"] {
-  padding: clamp(1rem, 3vw, 1.75rem);
-  border-radius: var(--raggio);
-  margin-bottom: var(--spazio-m);
-}
-
-/* Pulsanti e campi: stessa altezza, comodi da toccare */
-button,
-input,
-select,
-textarea {
-  font: inherit;
-  font-size: 1rem;
-  min-height: 44px;
-  padding: 0.6rem 1rem;
-  border-radius: 12px;
-}
-
-input, select, textarea { width: 100%; }
-textarea { min-height: 120px; resize: vertical; }
-
-button { cursor: pointer; white-space: nowrap; }
-
-/* Gruppi di pulsanti ben distanziati */
-button + button { margin-left: var(--spazio-xs); }
-
-/* Immagini e icone mai fuori misura */
-img, svg, video { max-width: 100%; height: auto; }
-
-/* Smartphone */
-@media (max-width: 600px) {
-  :root { --raggio: 14px; }
-  body { padding: 0.9rem; }
-  button { width: 100%; }
-  button + button { margin-left: 0; margin-top: var(--spazio-xs); }
-}
-</style>
-</head>
-<body>
-
-<div class="blob b1"></div>
-<div class="blob b2"></div>
-<div class="blob b3"></div>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-
-<div id="gdGate" style="position:fixed;inset:0;z-index:9999;background:#0f172a;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:sans-serif;text-align:center;padding:20px">
-  <h2 style="margin:0">Flight Center – Registro Voli</h2>
-  <p style="margin:0;opacity:.8">Collega Google Drive per usare il registro.<br>I dati saranno salvati automaticamente nel tuo Drive.</p>
-  <button id="gdLogin" style="padding:12px 22px;font-size:16px;border:0;border-radius:8px;background:#fff;color:#0f172a;cursor:pointer">Accedi con Google</button>
-  <div id="gdStato" style="min-height:20px;opacity:.85"></div>
-</div>
-<div id="gdBadge" style="position:fixed;bottom:10px;right:10px;z-index:9998;background:#0f172a;color:#fff;font:12px sans-serif;padding:6px 10px;border-radius:6px;display:none"></div>
-
-<script>
-(()=>{
-  const CLIENT_ID="759976089681-cq8c7ssjun7gue9f7qdkpq9iduu7bcf6.apps.googleusercontent.com";
-  const SCOPE="https://www.googleapis.com/auth/drive.file";
-  const KEY="alicaorle_registro_voli";
-  const FILE_NAME="registro-voli-alicaorle.json";
-
-  const gate=document.getElementById("gdGate");
-  const stato=document.getElementById("gdStato");
-  const badge=document.getElementById("gdBadge");
-  const origSet=Storage.prototype.setItem;
-  let token=null, fileId=sessionStorage.getItem("gd_fileId"), timer=null, inAttesa=false;
-
-  const salvato=JSON.parse(sessionStorage.getItem("gd_tok")||"null");
-  if(salvato && salvato.exp>Date.now()) token=salvato.t;
-
-  const mostra=t=>{badge.style.display="block";badge.textContent=t;};
-
-  async function api(url,opt={}){
-    const r=await fetch(url,{...opt,headers:{...(opt.headers||{}),Authorization:"Bearer "+token}});
-    if(r.status===401){sessionStorage.removeItem("gd_tok");location.reload();throw new Error("Sessione scaduta");}
-    if(!r.ok) throw new Error(await r.text());
-    return r;
-  }
-
-  async function trovaFile(){
-    if(fileId) return fileId;
-    const q=encodeURIComponent(`name='${FILE_NAME}' and trashed=false`);
-    const r=await (await api(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id)`)).json();
-    fileId=r.files&&r.files[0]?r.files[0].id:null;
-    if(fileId) sessionStorage.setItem("gd_fileId",fileId);
-    return fileId;
-  }
-
-  async function carica(testo){
-    const fd=new FormData();
-    const meta=fileId?{}:{name:FILE_NAME,mimeType:"application/json"};
-    fd.append("metadata",new Blob([JSON.stringify(meta)],{type:"application/json"}));
-    fd.append("file",new Blob([testo],{type:"application/json"}));
-    const url=fileId
-      ?`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`
-      :"https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id";
-    const r=await (await api(url,{method:fileId?"PATCH":"POST",body:fd})).json();
-    if(!fileId){fileId=r.id;sessionStorage.setItem("gd_fileId",fileId);}
-  }
-
-  function programmaSalvataggio(){
-    inAttesa=true; mostra("⏳ Salvataggio su Drive…");
-    clearTimeout(timer);
-    timer=setTimeout(async()=>{
-      try{
-        await carica(localStorage.getItem(KEY)||"[]");
-        inAttesa=false; mostra("✅ Salvato su Drive");
-      }catch(e){mostra("⚠️ Errore salvataggio Drive");console.error(e);}
-    },1500);
-  }
-
-  function attivaSincronizzazione(){
-    Storage.prototype.setItem=function(k,v){
-      origSet.call(this,k,v);
-      if(this===localStorage && k===KEY) programmaSalvataggio();
-    };
-    window.addEventListener("beforeunload",e=>{if(inAttesa){e.preventDefault();e.returnValue="";}});
-    mostra("☁️ Collegato a Google Drive");
-  }
-
-  async function avvia(){
-    stato.textContent="Sincronizzazione con Google Drive…";
-    try{
-      if(!sessionStorage.getItem("gd_sync")){
-        const id=await trovaFile();
-        if(id){
-          const testo=await (await api(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`)).text();
-          const dati=JSON.parse(testo||"[]");
-          if(!Array.isArray(dati)) throw new Error("File su Drive non valido");
-          origSet.call(localStorage,KEY,JSON.stringify(dati));
-        }else{
-          await carica(localStorage.getItem(KEY)||"[]");
-        }
-        sessionStorage.setItem("gd_sync","1");
-        location.reload();
-        return;
-      }
-      gate.remove();
-      attivaSincronizzazione();
-    }catch(e){
-      stato.textContent="Errore: "+e.message;
-      console.error(e);
-    }
-  }
-
-  function login(){
-    if(!window.google||!google.accounts){stato.textContent="Caricamento Google in corso, riprova tra un attimo.";return;}
-    google.accounts.oauth2.initTokenClient({
-      client_id:CLIENT_ID,
-      scope:SCOPE,
-      callback:r=>{
-        if(r.error){stato.textContent="Accesso non autorizzato.";return;}
-        token=r.access_token;
-        sessionStorage.setItem("gd_tok",JSON.stringify({t:token,exp:Date.now()+(r.expires_in-60)*1000}));
-        avvia();
-      }
-    }).requestAccessToken();
-  }
-
-  document.getElementById("gdLogin").onclick=login;
-  if(token) avvia();
-})();
-</script>
-<header>
-  <h1>✈ Flight Center</h1>
-  <p>Registro Voli</p>
-</header>
-
-<main>
-
-  <!-- STATISTICHE -->
-  <div class="stats">
-    <div class="card glass"><div class="num" id="statVoli">0</div><div class="lbl">Voli totali</div></div>
-    <div class="card glass"><div class="num" id="statOre">0:00</div><div class="lbl">Ore di volo</div></div>
-    <div class="card glass"><div class="num" id="statAtt">0</div><div class="lbl">Atterraggi</div></div>
-  </div>
-
-  <!-- MODULO INSERIMENTO -->
-  <div class="card">
-    <h2 id="titoloForm">Nuovo volo</h2>
-    <form id="formVolo" autocomplete="off">
-      <div class="grid">
-        <div>
-          <label for="data">Data</label>
-          <input type="date" id="data" required>
-        </div>
-        <div>
-          <label for="pilota">Pilota</label>
-          <input type="text" id="pilota" placeholder="Nome e cognome" required>
-        </div>
-        <div>
-          <label for="aeromobile">Aeromobile (marche)</label>
-          <input type="text" id="aeromobile" placeholder="Es. I-ABCD" required>
-        </div>
-        <div>
-          <label for="tipo">Tipo di volo</label>
-          <select id="tipo">
-            <option>Locale</option>
-            <option>Navigazione</option>
-            <option>Scuola</option>
-            <option>Addestramento</option>
-            <option>Altro</option>
-          </select>
-        </div>
-        <div>
-          <label for="partenza">Partenza</label>
-          <input type="text" id="partenza" placeholder="Es. Caorle">
-        </div>
-        <div>
-          <label for="arrivo">Arrivo</label>
-          <input type="text" id="arrivo" placeholder="Es. Caorle">
-        </div>
-        <div>
-          <label for="decollo">Orario decollo</label>
-          <input type="time" id="decollo" required>
-        </div>
-        <div>
-          <label for="atterraggio">Orario atterraggio</label>
-          <input type="time" id="atterraggio" required>
-        </div>
-        <div>
-          <label for="numAtt">N. atterraggi</label>
-          <input type="number" id="numAtt" min="1" value="1">
-        </div>
-        <div>
-          <label>Durata</label>
-          <div class="durata-box" id="durata">--:--</div>
-        </div>
-        <div class="full">
-          <label for="note">Note</label>
-          <textarea id="note" placeholder="Meteo, osservazioni, ecc."></textarea>
-        </div>
-      </div>
-      <div class="buttons">
-        <button type="submit" class="btn-primary" id="btnSalva">Salva volo</button>
-        <button type="button" class="btn-secondary" id="btnAnnulla">Svuota modulo</button>
-      </div>
-      <div class="msg" id="msg"></div>
-    </form>
-  </div>
-
-  <!-- ELENCO VOLI -->
-  <div class="card">
-    <h2>Voli registrati</h2>
-    <div class="toolbar">
-      <input type="text" id="cerca" placeholder="🔍 Cerca per pilota, aeromobile, località...">
-      <button type="button" class="btn-success" id="btnCsv">Esporta CSV</button>
-      <button type="button" class="btn-danger" id="btnCancellaTutto">Cancella tutto</button>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Pilota</th>
-            <th>Aeromobile</th>
-            <th>Tipo</th>
-            <th>Tratta</th>
-            <th>Decollo</th>
-            <th>Atterr.</th>
-            <th>Durata</th>
-            <th>Att.</th>
-            <th>Note</th>
-            <th>Azioni</th>
-          </tr>
-        </thead>
-        <tbody id="tabella"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <div id="stato">✗ Script bloccati: apri il file in Safari o Chrome</div>
-  <noscript>
-    <p style="text-align:center;color:#a53030;font-weight:bold;">
-      JavaScript è disattivato in questo browser.
-    </p>
-  </noscript>
-
-</main>
-
-<script>
-(function () {
-  "use strict";
-
-  var CHIAVE = "alicaorle_registro_voli";
-  var voli = [];
-  var idModifica = null;
-
-  function $(id) { return document.getElementById(id); }
-
-  /* ---------- Salvataggio ---------- */
-  function carica() {
-    try {
-      var dati = localStorage.getItem(CHIAVE);
-      voli = dati ? JSON.parse(dati) : [];
-      if (!Array.isArray(voli)) voli = [];
-    } catch (e) {
-      voli = [];
-    }
-  }
-
-  function salva() {
-    try {
-      localStorage.setItem(CHIAVE, JSON.stringify(voli));
-      return true;
-    } catch (e) {
-      mostraMsg("Impossibile salvare i dati in questo browser.", false);
-      return false;
-    }
-  }
-
-  /* ---------- Utilità ---------- */
-  function minutiDa(orario) {
-    if (!orario) return null;
-    var p = orario.split(":");
-    return parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
-  }
-
-  function calcolaDurata(dec, att) {
-    var a = minutiDa(dec), b = minutiDa(att);
-    if (a === null || b === null) return null;
-    var diff = b - a;
-    if (diff < 0) diff += 24 * 60; // volo oltre la mezzanotte
-    return diff;
-  }
-
-  function formatta(min) {
-    if (min === null || isNaN(min)) return "--:--";
-    var h = Math.floor(min / 60);
-    var m = min % 60;
-    return h + ":" + (m < 10 ? "0" : "") + m;
-  }
-
-  function formattaData(iso) {
-    if (!iso) return "";
-    var p = iso.split("-");
-    return p[2] + "/" + p[1] + "/" + p[0];
-  }
-
-function esc(testo) {
-  var A = "&";
-  return String(testo == null ? "" : testo)
-    .replace(/&/g, A + "amp;")
-    .replace(/</g, A + "lt;")
-    .replace(/>/g, A + "gt;")
-    .replace(/"/g, A + "quot;")
-    .replace(/'/g, A + "#39;");
-}
-
-  function mostraMsg(testo, ok) {
-    var m = $("msg");
-    m.textContent = testo;
-    m.className = "msg " + (ok ? "ok" : "err");
-    clearTimeout(mostraMsg.t);
-    mostraMsg.t = setTimeout(function () { m.className = "msg"; }, 3000);
-  }
-
-  function aggiornaDurata() {
-    $("durata").textContent = formatta(calcolaDurata($("decollo").value, $("atterraggio").value));
-  }
-
-  /* ---------- Visualizzazione ---------- */
-  function disegna() {
-    var filtro = $("cerca").value.trim().toLowerCase();
-    var ordinati = voli.slice().sort(function (a, b) {
-      return (b.data + b.decollo).localeCompare(a.data + a.decollo);
-    });
-
-    var filtrati = ordinati.filter(function (v) {
-      if (!filtro) return true;
-      return [v.pilota, v.aeromobile, v.tipo, v.partenza, v.arrivo, v.note]
-        .join(" ").toLowerCase().indexOf(filtro) !== -1;
-    });
-
-    var html = "";
-    filtrati.forEach(function (v) {
-      html +=
-        "<tr>" +
-        "<td>" + esc(formattaData(v.data)) + "</td>" +
-        "<td>" + esc(v.pilota) + "</td>" +
-        "<td>" + esc(v.aeromobile) + "</td>" +
-        "<td>" + esc(v.tipo) + "</td>" +
-        "<td>" + esc(v.partenza || "-") + " → " + esc(v.arrivo || "-") + "</td>" +
-        "<td>" + esc(v.decollo) + "</td>" +
-        "<td>" + esc(v.atterraggio) + "</td>" +
-        "<td><strong>" + esc(formatta(v.durata)) + "</strong></td>" +
-        "<td>" + esc(v.numAtt) + "</td>" +
-        "<td class='note'>" + esc(v.note) + "</td>" +
-        "<td>" +
-          "<button class='btn-secondary btn-small' data-azione='modifica' data-id='" + esc(v.id) + "'>Modifica</button> " +
-          "<button class='btn-danger btn-small' data-azione='elimina' data-id='" + esc(v.id) + "'>Elimina</button>" +
-        "</td>" +
-        "</tr>";
-    });
-
-    if (!html) {
-      html = "<tr><td colspan='11' class='vuoto'>" +
-        (voli.length ? "Nessun volo corrisponde alla ricerca." : "Nessun volo registrato.") +
-        "</td></tr>";
-    }
-    $("tabella").innerHTML = html;
-
-    var totMin = 0, totAtt = 0;
-    voli.forEach(function (v) {
-      totMin += v.durata || 0;
-      totAtt += parseInt(v.numAtt, 10) || 0;
-    });
-    $("statVoli").textContent = voli.length;
-    $("statOre").textContent = formatta(totMin);
-    $("statAtt").textContent = totAtt;
+  .stats .lbl {
+    margin-top: 6px;
+    font-size: .78rem;
+    color: var(--testo-soft);
+    text-transform: uppercase;
+    letter-spacing: .1em;
   }
 
   /* ---------- Modulo ---------- */
-  function svuota() {
-    $("formVolo").reset();
-    $("data").value = new Date().toISOString().slice(0, 10);
-    $("numAtt").value = 1;
-    idModifica = null;
-    $("titoloForm").textContent = "Nuovo volo";
-    $("btnSalva").textContent = "Salva volo";
-    aggiornaDurata();
+  form { margin: 0; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px 16px;
+  }
+  .grid .full { grid-column: 1 / -1; }
+
+  label {
+    display: block;
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--testo-soft);
+    margin-bottom: 6px;
+    letter-spacing: .02em;
   }
 
-  function onSubmit(e) {
-    e.preventDefault();
-
-    var volo = {
-      id: idModifica || String(Date.now()) + Math.random().toString(16).slice(2, 6),
-      data: $("data").value,
-      pilota: $("pilota").value.trim(),
-      aeromobile: $("aeromobile").value.trim().toUpperCase(),
-      tipo: $("tipo").value,
-      partenza: $("partenza").value.trim(),
-      arrivo: $("arrivo").value.trim(),
-      decollo: $("decollo").value,
-      atterraggio: $("atterraggio").value,
-      numAtt: parseInt($("numAtt").value, 10) || 1,
-      note: $("note").value.trim()
-    };
-    volo.durata = calcolaDurata(volo.decollo, volo.atterraggio);
-
-    if (!volo.data || !volo.pilota || !volo.aeromobile || volo.durata === null) {
-      mostraMsg("Compila data, pilota, aeromobile e orari.", false);
-      return;
-    }
-
-    if (idModifica) {
-      voli = voli.map(function (v) { return v.id === idModifica ? volo : v; });
-    } else {
-      voli.push(volo);
-    }
-
-    if (salva()) {
-      mostraMsg(idModifica ? "Volo aggiornato ✓" : "Volo salvato ✓", true);
-      svuota();
-      disegna();
-    }
+  input, select, textarea, .durata-box {
+    width: 100%;
+    height: 44px;
+    padding: 0 14px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid var(--bordo);
+    border-radius: var(--raggio-s);
+    color: var(--testo);
+    font: inherit;
+    transition: border-color .2s, box-shadow .2s, background .2s;
+  }
+  textarea { height: auto; min-height: 90px; padding: 12px 14px; resize: vertical; }
+  input::placeholder, textarea::placeholder { color: rgba(255,255,255,.45); }
+  select option { color: #000; }
+  input[type="date"], input[type="time"] { color-scheme: dark; }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accento);
+    background: rgba(255,255,255,.12);
+    box-shadow: 0 0 0 3px rgba(79,195,255,.25);
   }
 
-  function modifica(id) {
-    var v = voli.find(function (x) { return x.id === id; });
-    if (!v) return;
-    idModifica = id;
-    $("data").value = v.data;
-    $("pilota").value = v.pilota;
-    $("aeromobile").value = v.aeromobile;
-    $("tipo").value = v.tipo;
-    $("partenza").value = v.partenza;
-    $("arrivo").value = v.arrivo;
-    $("decollo").value = v.decollo;
-    $("atterraggio").value = v.atterraggio;
-    $("numAtt").value = v.numAtt;
-    $("note").value = v.note;
-    $("titoloForm").textContent = "Modifica volo";
-    $("btnSalva").textContent = "Aggiorna volo";
-    aggiornaDurata();
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  .durata-box {
+    display: flex; align-items: center;
+    font-weight: 800; font-size: 1.1rem;
+    color: var(--accento);
+    background: rgba(79,195,255,.10);
+    border-color: rgba(79,195,255,.35);
   }
 
-  function elimina(id) {
-    if (!confirm("Eliminare questo volo?")) return;
-    voli = voli.filter(function (v) { return v.id !== id; });
-    salva();
-    if (idModifica === id) svuota();
-    disegna();
+  /* ---------- Pulsanti ---------- */
+  button {
+    height: 44px;
+    padding: 0 20px;
+    border: 1px solid var(--bordo);
+    border-radius: var(--raggio-s);
+    background: var(--glass-strong);
+    color: var(--testo);
+    font: inherit; font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform .15s, filter .2s, background .2s;
+  }
+  button:hover { transform: translateY(-1px); filter: brightness(1.12); }
+  button:active { transform: translateY(0); }
+
+  .btn-primary   { background: linear-gradient(135deg, #00c6ff, #0072ff); border: none; box-shadow: 0 6px 18px rgba(0,114,255,.35); }
+  .btn-secondary { background: rgba(255,255,255,.10); }
+  .btn-success   { background: rgba(34,211,166,.22); border-color: rgba(34,211,166,.5); }
+  .btn-danger    { background: rgba(255,107,107,.22); border-color: rgba(255,107,107,.5); }
+  .btn-small     { height: 32px; padding: 0 12px; font-size: .8rem; border-radius: 9px; }
+
+  .buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+
+  /* ---------- Messaggi ---------- */
+  .msg {
+    margin-top: 0; max-height: 0; overflow: hidden; opacity: 0;
+    border-radius: var(--raggio-s); font-weight: 600;
+    transition: all .3s;
+  }
+  .msg.ok, .msg.err { max-height: 60px; opacity: 1; margin-top: 14px; padding: 10px 14px; }
+  .msg.ok  { background: rgba(34,211,166,.18); border: 1px solid rgba(34,211,166,.45); }
+  .msg.err { background: rgba(255,107,107,.18); border: 1px solid rgba(255,107,107,.45); }
+
+  /* ---------- Barra ricerca ---------- */
+  .toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .toolbar input { flex: 1 1 260px; width: auto; }
+
+  /* ---------- Tabella ---------- */
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--bordo);
+    border-radius: var(--raggio-s);
+  }
+  table { width: 100%; border-collapse: collapse; min-width: 900px; font-size: .88rem; }
+  th, td { padding: 11px 12px; text-align: left; vertical-align: middle; }
+  th {
+    background: rgba(255,255,255,.08);
+    color: var(--testo-soft);
+    font-size: .72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em;
+    white-space: nowrap;
+  }
+  td { border-top: 1px solid rgba(255,255,255,.10); }
+  tbody tr:hover td { background: rgba(255,255,255,.06); }
+  td.note { max-width: 220px; color: var(--testo-soft); overflow-wrap: anywhere; }
+  td:last-child { white-space: nowrap; }
+  td:last-child button + button { margin-left: 6px; }
+  td.vuoto { text-align: center; padding: 30px; color: var(--testo-soft); }
+
+  /* ---------- Stato programma ---------- */
+  #stato {
+    display: block; width: fit-content;
+    margin: 10px auto 30px;
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-size: .8rem;
+    background: rgba(255,107,107,.18);
+    border: 1px solid rgba(255,107,107,.4);
+  }
+  #stato.attivo { background: rgba(34,211,166,.15); border-color: rgba(34,211,166,.4); }
+
+  /* ---------- Schermata accesso Google ---------- */
+  #gdGate {
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364) !important;
+    font-family: inherit !important;
+  }
+  #gdGate h2 { font-size: 1.6rem; font-weight: 800; }
+  #gdLogin {
+    height: 48px !important;
+    padding: 0 28px !important;
+    border-radius: 14px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,.3);
   }
 
-  /* ---------- Esportazione CSV ---------- */
-  function esportaCsv() {
-    if (!voli.length) {
-      alert("Non ci sono voli da esportare.");
-      return;
-    }
-    var righe = [["Data","Pilota","Aeromobile","Tipo","Partenza","Arrivo","Decollo","Atterraggio","Durata","Atterraggi","Note"]];
-    voli.forEach(function (v) {
-      righe.push([formattaData(v.data), v.pilota, v.aeromobile, v.tipo, v.partenza, v.arrivo,
-                  v.decollo, v.atterraggio, formatta(v.durata), v.numAtt, v.note]);
-    });
-    var csv = righe.map(function (r) {
-      return r.map(function (c) {
-        return '"' + String(c == null ? "" : c).replace(/"/g, '""') + '"';
-      }).join(";");
-    }).join("\r\n");
-
-    var blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
-    var link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "registro-voli-alicaorle.csv";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  /* ---------- Badge Drive ---------- */
+  #gdBadge {
+    background: rgba(15,23,42,.6) !important;
+    border: 1px solid var(--bordo);
+    border-radius: 999px !important;
+    padding: 7px 14px !important;
+    font: 600 12px -apple-system, "Segoe UI", sans-serif !important;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    bottom: 14px !important; right: 14px !important;
   }
 
-  /* ---------- Avvio ---------- */
-  function avvia() {
-    carica();
-    svuota();
-    disegna();
-
-    $("formVolo").addEventListener("submit", onSubmit);
-    $("btnAnnulla").addEventListener("click", svuota);
-    $("decollo").addEventListener("input", aggiornaDurata);
-    $("atterraggio").addEventListener("input", aggiornaDurata);
-    $("cerca").addEventListener("input", disegna);
-    $("btnCsv").addEventListener("click", esportaCsv);
-    $("btnCancellaTutto").addEventListener("click", function () {
-      if (!voli.length) return;
-      if (confirm("Vuoi davvero cancellare TUTTI i voli? L'operazione non si può annullare.")) {
-        voli = [];
-        salva();
-        svuota();
-        disegna();
-      }
-    });
-    $("tabella").addEventListener("click", function (e) {
-      var btn = e.target.closest("button[data-azione]");
-      if (!btn) return;
-      var id = btn.getAttribute("data-id");
-      if (btn.getAttribute("data-azione") === "modifica") modifica(id);
-      else elimina(id);
-    });
-
-    var stato = $("stato");
-    stato.textContent = "✓ Programma attivo";
-    stato.className = "attivo";
+  /* ---------- Smartphone ---------- */
+  @media (max-width: 640px) {
+    .stats { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .stats .card { padding: 14px 6px; }
+    .stats .lbl { font-size: .65rem; letter-spacing: .04em; }
+    .grid { grid-template-columns: 1fr 1fr; }
+    .buttons button, .toolbar button { flex: 1 1 auto; }
+    .toolbar input { flex-basis: 100%; }
   }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", avvia);
-  } else {
-    avvia();
-  }
-})();
-</script>
-
-</body>
-</html>
+</style>
