@@ -945,7 +945,6 @@ function esc(testo) {
     var filtro = $("cerca").value.trim().toLowerCase();
     var ordinati = voli.slice().sort(function (a, b) {
       return (b.data + b.decollo).localeCompare(a.data + a.decollo);
-      "<td class='note'>" + (v.note? "<span class='nota-breve' data-nota='" + esc(v.id) + "' title='Tocca per leggere'>" + esc(v.note) + "</span>": "-") + "</td>" +
     });
 
     var filtrati = ordinati.filter(function (v) {
@@ -968,7 +967,7 @@ function esc(testo) {
         "<td>" + esc(v.atterraggio) + "</td>" +
         "<td><strong>" + esc(formatta(v.durata)) + "</strong></td>" +
         "<td>" + esc(v.numAtt) + "</td>" +
-        "<td class='note'>" + esc(v.note) + "</td>" +
+        "<td class='note'>" + (v.note ? "<span class='nota-breve' data-nota='" + esc(v.id) + "' title='Tocca per leggere'>" + esc(v.note) + "</span>" : "-") + "</td>" +
         "<td>" +
           "<button class='btn-secondary btn-small' data-azione='modifica' data-id='" + esc(v.id) + "'>Modifica</button> " +
           "<button class='btn-danger btn-small' data-azione='elimina' data-id='" + esc(v.id) + "'>Elimina</button>" +
