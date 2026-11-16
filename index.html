@@ -498,6 +498,33 @@ header, main, .card, .stats, table, form {
 #ocrStato { margin: 8px 0; color: var(--testo-soft); font-size: .85rem; }
 #ocrBarra { height: 6px; border-radius: 6px; background: rgba(255,255,255,.12); overflow: hidden; margin-bottom: 10px; }
 #ocrBarra div { height: 100%; width: 0; background: var(--accento); transition: width .2s; }
+  /* ===== Note abbreviate + pop-up ===== */
+td.note { max-width: 180px; }
+.nota-breve {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  text-decoration: underline dotted rgba(255,255,255,.4);
+}
+.nota-breve:hover { color: var(--accento); }
+
+#notaPopup {
+  position: fixed; inset: 0; z-index: 10000;
+  display: none; align-items: center; justify-content: center;
+  padding: 20px;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+#notaPopup.aperto { display: flex; }
+#notaPopup .card {
+  width: 100%; max-width: 480px; margin: 0;
+  max-height: 80vh; overflow-y: auto;
+  background: rgba(15,32,39,.92);
+}
+#notaInfo { color: var(--testo-soft); font-size: .85rem; margin: -8px 0 14px; }
+#notaTesto { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
 </style>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
@@ -822,7 +849,16 @@ header, main, .card, .stats, table, form {
   </noscript>
 
 </main>
-
+<div id="notaPopup">
+  <div class="card">
+    <h2>Note del volo</h2>
+    <div id="notaInfo"></div>
+    <div id="notaTesto"></div>
+    <div class="buttons">
+      <button type="button" class="btn-primary" id="btnNotaChiudi">Chiudi</button>
+    </div>
+  </div>
+</div>
 <script>
 (function () {
   "use strict";
@@ -909,6 +945,7 @@ function esc(testo) {
     var filtro = $("cerca").value.trim().toLowerCase();
     var ordinati = voli.slice().sort(function (a, b) {
       return (b.data + b.decollo).localeCompare(a.data + a.decollo);
+      "<td class='note'>" + (v.note? "<span class='nota-breve' data-nota='" + esc(v.id) + "' title='Tocca per leggere'>" + esc(v.note) + "</span>": "-") + "</td>" +
     });
 
     var filtrati = ordinati.filter(function (v) {
@@ -1332,12 +1369,34 @@ function esc(testo) {
       }
     });
     $("tabella").addEventListener("click", function (e) {
-      var btn = e.target.closest("button[data-azione]");
-      if (!btn) return;
-      var id = btn.getAttribute("data-id");
-      if (btn.getAttribute("data-azione") === "modifica") modifica(id);
-      else elimina(id);
-    });
+  // Clic sulla nota: apre il pop-up
+  var nota = e.target.closest("[data-nota]");
+  if (nota) {
+    var v = voli.find(function (x) { return x.id === nota.getAttribute("data-nota"); });
+    if (!v) return;
+    $("notaInfo").textContent = formattaData(v.data) + " · " + v.pilota + " · " + v.aeromobile;
+    $("notaTesto").textContent = v.note;
+    $("notaPopup").classList.add("aperto");
+    return;
+  }
+
+  // Pulsanti Modifica / Elimina
+  var btn = e.target.closest("button[data-azione]");
+  if (!btn) return;
+  var id = btn.getAttribute("data-id");
+  if (btn.getAttribute("data-azione") === "modifica") modifica(id);
+  else elimina(id);
+});
+
+// Chiusura del pop-up: pulsante, clic fuori dal riquadro o tasto Esc
+function chiudiNota() { $("notaPopup").classList.remove("aperto"); }
+$("btnNotaChiudi").addEventListener("click", chiudiNota);
+$("notaPopup").addEventListener("click", function (e) {
+  if (e.target === this) chiudiNota();
+});
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape") chiudiNota();
+});
 
     var stato = $("stato");
     stato.textContent = "✓ Programma attivo";
