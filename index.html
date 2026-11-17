@@ -458,7 +458,7 @@ header, main, .card, .stats, table, form {
   .card { padding: 16px; margin-bottom: 16px; }
 
   /* Statistiche: la prima su tutta la riga, poi 2 x 2 */
-  .stats { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+ .stats { grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
   .stats .card { padding: 14px 8px; }
   .stats .lbl { font-size: .68rem; letter-spacing: .05em; }
 
@@ -525,6 +525,11 @@ td.note { max-width: 180px; }
 }
 #notaInfo { color: var(--testo-soft); font-size: .85rem; margin: -8px 0 14px; }
 #notaTesto { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+.stats .cat-vds  { border-color: rgba(34,211,166,.45); }
+.stats .cat-pic  { border-color: rgba(79,195,255,.45); }
+.stats .cat-dual { border-color: rgba(167,139,250,.45); }
+.stats .cat-vds .num  { background-image: linear-gradient(135deg, #fff, #22d3a6); }
+.stats .cat-dual .num { background-image: linear-gradient(135deg, #fff, #a78bfa); }
 </style>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
@@ -717,12 +722,25 @@ td.note { max-width: 180px; }
 
   <!-- STATISTICHE -->
 <div class="stats">
+  <!-- Totali -->
   <div class="card glass"><div class="num" id="statVoli">0</div><div class="lbl">Voli totali</div></div>
-  <div class="card glass"><div class="num" id="statOre">0:00</div><div class="lbl">Ore di volo</div></div>
-  <div class="card glass"><div class="num" id="statVds">0:00</div><div class="lbl">Ore VDS</div></div>
-  <div class="card glass"><div class="num" id="statPic">0:00</div><div class="lbl">Ore PPL PIC</div></div>
-  <div class="card glass"><div class="num" id="statDual">0:00</div><div class="lbl">Ore PPL DUAL</div></div>
-  <div class="card glass"><div class="num" id="statAtt">0</div><div class="lbl">Atterraggi</div></div>
+  <div class="card glass"><div class="num" id="statOre">0:00</div><div class="lbl">Ore totali</div></div>
+  <div class="card glass"><div class="num" id="statAtt">0</div><div class="lbl">Atterraggi totali</div></div>
+
+  <!-- VDS -->
+  <div class="card glass cat-vds"><div class="num" id="statVdsVoli">0</div><div class="lbl">Voli VDS</div></div>
+  <div class="card glass cat-vds"><div class="num" id="statVds">0:00</div><div class="lbl">Ore VDS</div></div>
+  <div class="card glass cat-vds"><div class="num" id="statVdsAtt">0</div><div class="lbl">Att. VDS</div></div>
+
+  <!-- PPL PIC -->
+  <div class="card glass cat-pic"><div class="num" id="statPicVoli">0</div><div class="lbl">Voli PPL PIC</div></div>
+  <div class="card glass cat-pic"><div class="num" id="statPic">0:00</div><div class="lbl">Ore PPL PIC</div></div>
+  <div class="card glass cat-pic"><div class="num" id="statPicAtt">0</div><div class="lbl">Att. PPL PIC</div></div>
+
+  <!-- PPL DUAL -->
+  <div class="card glass cat-dual"><div class="num" id="statDualVoli">0</div><div class="lbl">Voli PPL DUAL</div></div>
+  <div class="card glass cat-dual"><div class="num" id="statDual">0:00</div><div class="lbl">Ore PPL DUAL</div></div>
+  <div class="card glass cat-dual"><div class="num" id="statDualAtt">0</div><div class="lbl">Att. PPL DUAL</div></div>
 </div>
   <!-- MODULO INSERIMENTO -->
   <div class="card">
@@ -982,21 +1000,40 @@ function esc(testo) {
     }
     $("tabella").innerHTML = html;
 
-  var totMin = 0, totAtt = 0, totVds = 0, totPic = 0, totDual = 0;
-  voli.forEach(function (v) {
-    var d = v.durata || 0;
-    totMin += d;
-    totAtt += parseInt(v.numAtt, 10) || 0;
-    if (v.licenza === "VDS") totVds += d;
-    else if (v.licenza === "PPL PIC" || v.licenza === "PPL") totPic += d;
-    else if (v.licenza === "PPL DUAL") totDual += d;
-  });
-  $("statVoli").textContent = voli.length;
-  $("statOre").textContent = formatta(totMin);
-  $("statVds").textContent = formatta(totVds);
-  $("statPic").textContent = formatta(totPic);
-  $("statDual").textContent = formatta(totDual);
-  $("statAtt").textContent = totAtt;
+var tot = { voli: 0, min: 0, att: 0 };
+    var cat = {
+      vds:  { voli: 0, min: 0, att: 0 },
+      pic:  { voli: 0, min: 0, att: 0 },
+      dual: { voli: 0, min: 0, att: 0 }
+    };
+
+    voli.forEach(function (v) {
+      var d = v.durata || 0;
+      var a = parseInt(v.numAtt, 10) || 0;
+      tot.voli++; tot.min += d; tot.att += a;
+
+      var c = null;
+      if (v.licenza === "VDS") c = cat.vds;
+      else if (v.licenza === "PPL PIC" || v.licenza === "PPL") c = cat.pic;
+      else if (v.licenza === "PPL DUAL") c = cat.dual;
+      if (c) { c.voli++; c.min += d; c.att += a; }
+    });
+
+    $("statVoli").textContent = tot.voli;
+    $("statOre").textContent  = formatta(tot.min);
+    $("statAtt").textContent  = tot.att;
+
+    $("statVdsVoli").textContent = cat.vds.voli;
+    $("statVds").textContent     = formatta(cat.vds.min);
+    $("statVdsAtt").textContent  = cat.vds.att;
+
+    $("statPicVoli").textContent = cat.pic.voli;
+    $("statPic").textContent     = formatta(cat.pic.min);
+    $("statPicAtt").textContent  = cat.pic.att;
+
+    $("statDualVoli").textContent = cat.dual.voli;
+    $("statDual").textContent     = formatta(cat.dual.min);
+    $("statDualAtt").textContent  = cat.dual.att;
   }
 
   /* ---------- Modulo ---------- */
